@@ -7,15 +7,21 @@ const fs = require("fs");
 
 const router = express.Router();
 
+// Load env variables
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const UPLOADS_DIR = process.env.UPLOADS_DIR || "uploads";
+
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadsDirPath = path.join(__dirname, `../${UPLOADS_DIR}`);
+if (!fs.existsSync(uploadsDirPath)) {
+  fs.mkdirSync(uploadsDirPath, { recursive: true });
 }
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
-  destination: uploadsDir,
+  destination: (req, file, cb) => {
+    cb(null, uploadsDirPath);
+  },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   },
@@ -23,7 +29,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// File Upload Route
+// POST /api/upload
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -31,27 +37,29 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }
 
     const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
-    const qrCodeUrl = await QRCode.toDataURL(fileUrl);
-    
+
+    const qrCodeDataUrl = await QRCode.toDataURL(fileUrl);
+
     const newFile = new File({
       filename: req.file.filename,
       fileUrl,
-      qrCodeUrl,
+      qrCodeUrl: qrCodeDataUrl,
     });
 
     await newFile.save();
 
-    res.json({ 
+    res.status(200).json({
       status: "success",
-      fileUrl, 
-      qrCodeUrl,
-      filename: req.file.filename
+      fileUrl,
+      qrCodeUrl: qrCodeDataUrl,
+      filename: req.file.filename,
     });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ 
+    res.status(500).json({
+      status: "error",
       error: "Upload failed",
-      details: error.message 
+      details: error.message,
     });
   }
 });
