@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import axios from "axios";
 
-const API_UPLOAD_URL = "https://shareeasy-gvxs.onrender.com/api/upload";
+const API_UPLOAD_URL = "https://shareeasy-backend-gnjm.onrender.com/api/upload";
 
 const FileUpload = () => {
   const [file, setFile] = useState(null);
