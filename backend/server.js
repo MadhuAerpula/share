@@ -21,7 +21,9 @@ app.use(express.json());
 connectDB();
 
 // Serve static files
-app.use("/files", express.static(path.join(__dirname, UPLOADS_DIR)));
+// app.use("/files", express.static(path.join(__dirname, UPLOADS_DIR)));
+app.use("/uploads", express.static(path.join(__dirname, UPLOADS_DIR)));
+
 
 // Routes
 app.get("/", (req, res) => {
