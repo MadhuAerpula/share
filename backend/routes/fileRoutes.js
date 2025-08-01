@@ -3,50 +3,46 @@ const multer = require("multer");
 const path = require("path");
 const QRCode = require("qrcode");
 const File = require("../models/File");
-const fs = require("fs");
-
 const router = express.Router();
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR || "uploads";
-const uploadsDirPath = path.join(__dirname, `../${UPLOADS_DIR}`);
-if (!fs.existsSync(uploadsDirPath)) {
-  fs.mkdirSync(uploadsDirPath, { recursive: true });
-}
-
-// Multer storage
+// Configure multer for file upload
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDirPath),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
 });
+
 const upload = multer({ storage });
 
-// POST /api/upload
+// File upload route
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
+    const file = new File({
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    });
+
+    await file.save();
+
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const fileUrl = `${baseUrl}/uploads/${file.filename}`;
+
     const qrCodeUrl = await QRCode.toDataURL(fileUrl);
 
-    const newFile = new File({
-      filename: req.file.filename,
-      fileUrl,
-      qrCodeUrl,
-    });
-
-    await newFile.save();
-
-    res.status(200).json({
-      status: "success",
-      fileUrl,
-      qrCodeUrl,
-      filename: req.file.filename,
-    });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ status: "error", error: "Upload failed", details: error.message });
+    res.status(200).json({ fileUrl, qrCodeUrl });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
