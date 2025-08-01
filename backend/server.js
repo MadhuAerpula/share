@@ -2,48 +2,41 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-
 const connectDB = require("./config");
 const fileRoutes = require("./routes/fileRoutes");
 
 const app = express();
-
-// Load environment variables
 const PORT = process.env.PORT || 5000;
+const CLIENT_URL = process.env.CLIENT_URL || "*";
 const UPLOADS_DIR = process.env.UPLOADS_DIR || "uploads";
-const CLIENT_URL = process.env.CLIENT_URL || "*"; // Set this to your frontend URL
 
 // Middleware
 app.use(cors({
-  origin: CLIENT_URL, // e.g. "https://your-frontend.onrender.com"
+  origin: CLIENT_URL,
   credentials: true,
 }));
 app.use(express.json());
 
-// Connect to MongoDB
+// Connect DB
 connectDB();
 
-// Health check route
+// Serve static files
+app.use("/files", express.static(path.join(__dirname, UPLOADS_DIR)));
+
+// Routes
 app.get("/", (req, res) => {
   res.json({
     status: "success",
     message: "Backend is running!",
     availableRoutes: [
-      { method: "GET", path: "/api/home" },
       { method: "POST", path: "/api/upload" },
       { method: "GET", path: "/files/:filename" },
     ],
   });
 });
-
-// Serve uploaded files publicly
-app.use("/files", express.static(path.join(__dirname, UPLOADS_DIR)));
-
-
-// API routes
 app.use("/api", fileRoutes);
 
-// 404 handler
+// 404
 app.use((req, res) => {
   res.status(404).json({
     status: "error",
@@ -54,7 +47,5 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log(`📁 Serving uploaded files from: /files`);
-  console.log(`🌐 CORS allowed for: ${CLIENT_URL}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
