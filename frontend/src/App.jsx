@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./components/Home";
 import FileUpload from "./components/FileUpload";
 
-const API_URL = "https://shareeasy-gvxs.onrender.com/api";
-const UPLOADS_URL = "https://shareeasy-gvxs.onrender.com/api/upload";
+const API_URL = "https://shareeasy-backend-gnjm.onrender.com/api";
+const UPLOADS_URL = "https://shareeasy-backend-gnjm.onrender.com/api/upload";
 
 console.log("Backend API URL:", API_URL);
 console.log("Uploads URL:", UPLOADS_URL);
