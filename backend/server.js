@@ -36,8 +36,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// Serve uploaded files
+// Serve uploaded files publicly
 app.use("/files", express.static(path.join(__dirname, UPLOADS_DIR)));
+
 
 // API routes
 app.use("/api", fileRoutes);
